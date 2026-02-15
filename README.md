@@ -147,6 +147,11 @@ IoU is computed using `segmentation_models_pytorch.metrics`.
 
 ---
 
+
+## Download trained model from:
+https://drive.google.com/file/d/14LUjD-1mzeFRvBpqCfcoaHS3Ap-NARXB/view?usp=sharing
+
+
 ## 🔐 Model Format
 
 The trained model is stored as a **state_dict** serialized with PyTorch:
@@ -205,4 +210,5 @@ The system produces:
 
 * If running on GPU, ensure a CUDA-compatible PyTorch installation.
 * CPU execution works by default but will be slower.
+
 * Model backbone must match training (`B2` or `B5`) to load weights correctly.
