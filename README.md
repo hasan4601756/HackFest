@@ -145,6 +145,10 @@ IoU is computed using `segmentation_models_pytorch.metrics`.
 
 ---
 
+## Download trained model from:
+https://drive.google.com/file/d/16chig0coBFXnaVDjt4odhd94Q7LnqoYA/view?usp=sharing
+
+
 ## 🔐 Model Format
 
 The trained model is stored as a **state_dict** serialized using pickle:
