@@ -1,10 +1,10 @@
-# 🌿 Offroad Scene Semantic Segmentation
+# 🌿 Offroad Scene Semantic Segmentation with SegFormer
 
 IBA Datathon Project
 
 ## 📌 Overview
 
-This project performs **multi-class semantic segmentation** on off-road environmental images using **Unet++ with a ResNet50 encoder**.
+This project performs **multi-class semantic segmentation** on off-road environmental images using **SegFormer (B2/B5)**.
 
 The model segments each image into 10 semantic classes:
 
@@ -19,21 +19,18 @@ The model segments each image into 10 semantic classes:
 * Landscape
 * Sky
 
-The system is implemented using **PyTorch** and **segmentation_models_pytorch**, with Dice + Focal loss for improved class balance handling.
+The system is implemented using **PyTorch** and **Transformers**, with optional class weighting to handle imbalanced classes.
 
 ---
 
 ## 🧠 Model Architecture
 
-* **Architecture:** Unet++
-* **Encoder:** ResNet50
+* **Architecture:** SegFormer
+* **Backbone:** MIT-B2 or MIT-B5
 * **Classes:** 10
-* **Loss Function:**
-
-  * Dice Loss (multiclass)
-  * Focal Loss (multiclass)
+* **Loss Function:** Built-in CrossEntropyLoss (optionally weighted)
 * **Optimizer:** AdamW
-* **Scheduler:** CosineAnnealingLR
+* **Mixed Precision Training:** Enabled via `torch.amp` for faster training and lower memory usage
 
 ---
 
@@ -42,10 +39,12 @@ The system is implemented using **PyTorch** and **segmentation_models_pytorch**,
 ```
 project/
 │
-├── train.py                  # Training script
+├── train.py                  # Training script for SegFormer
 ├── evaluate.py               # Evaluation & visualization script
-├── model.pkl                 # Saved trained model (state_dict)
-├── requirements.txt
+├── segformer_big_model.pth   # Saved trained model (state_dict)
+├── requirements.txt          # Python dependencies
+├── README.md                 # This file
+```
 
 ---
 
@@ -57,7 +56,7 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-If running on GPU, install CUDA-enabled PyTorch from:
+If running on GPU, install CUDA-enabled PyTorch:
 
 [https://pytorch.org/get-started/locally/](https://pytorch.org/get-started/locally/)
 
@@ -74,15 +73,18 @@ python train.py
 Training features:
 
 * Image resizing to 512×512
-* Data augmentation (flip, brightness/contrast, hue/saturation)
-* Validation IoU calculation
-* Best model saved automatically
+* Data augmentation (flip, brightness/contrast)
+* Mixed precision (automatic) for GPU efficiency
+* Optional class-weighted CrossEntropyLoss for imbalanced classes
+* Model checkpoint saved after each epoch
 
 The best model is saved as:
 
 ```
-model.pkl
+segformer_big_model.pth
 ```
+
+---
 
 ## 🔬 Evaluation
 
@@ -96,7 +98,7 @@ Evaluation performs:
 
 * Per-class IoU calculation
 * Mean IoU calculation
-* Visualization of first 15 predictions
+* Visualization of first 10 predictions
 * Saves visual comparison images
 
 Output example:
@@ -113,7 +115,7 @@ FINAL MEAN IoU SCORE     | 0.7568
 Visualization images are saved in:
 
 ```
-./boosted_eval_results/
+./segformer_big_results/
 ```
 
 ---
@@ -145,25 +147,19 @@ IoU is computed using `segmentation_models_pytorch.metrics`.
 
 ---
 
-## Download trained model from:
-https://drive.google.com/file/d/16chig0coBFXnaVDjt4odhd94Q7LnqoYA/view?usp=sharing
-
-
 ## 🔐 Model Format
 
-The trained model is stored as a **state_dict** serialized using pickle:
+The trained model is stored as a **state_dict** serialized with PyTorch:
 
 ```
-model.pkl
+segformer_big_model.pth
 ```
 
 During evaluation:
 
 ```python
-with open(MODEL_PATH, "rb") as f:
-    state_dict = pickle.load(f)
-
-model.load_state_dict(state_dict)
+model = SegformerForSemanticSegmentation.from_pretrained(MODEL_NAME, num_labels=10)
+model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=device))
 ```
 
 ---
@@ -181,7 +177,7 @@ Works on:
 * CPU-only systems
 * GPU systems
 
-No CUDA-specific configuration required.
+No additional CUDA configuration is required.
 
 ---
 
@@ -189,8 +185,9 @@ No CUDA-specific configuration required.
 
 * Resize: 512 × 512
 * Normalization: ImageNet mean & std
-* Batch size: 4
-* Epochs: 50
+* Batch size: 4 (B2) / 1–2 (B5 on small GPU)
+* Epochs: 15
+* Optimizer: AdamW, LR = 6e-5
 
 ---
 
@@ -206,5 +203,6 @@ The system produces:
 
 ## 📌 Notes for Judges
 
-If running on GPU, please ensure CUDA-compatible PyTorch is installed.
-Otherwise, CPU execution works by default.
+* If running on GPU, ensure a CUDA-compatible PyTorch installation.
+* CPU execution works by default but will be slower.
+* Model backbone must match training (`B2` or `B5`) to load weights correctly.
